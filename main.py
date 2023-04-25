@@ -3,7 +3,7 @@ import discord
 from bs4 import BeautifulSoup
 import requests
 from discord.ext import commands
-import alive
+import alive #ONLY USE IF YOU ARE ON REPLIT AND CREATING A WEBSERVER USING FLASK AND THREADING
 TOKEN = os.environ['TOKEN']
 
 intents = discord.Intents.default()
