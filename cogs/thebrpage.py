@@ -111,8 +111,6 @@ class TheBRPage(commands.Cog):
       await ctx.send(embed=show_embed)
 
 
-  print("Hello world!")
-  
 
   
   @commands.group()
@@ -124,8 +122,78 @@ class TheBRPage(commands.Cog):
   @release.command(brief="Returns link to a release given its ID", aliases=['link', 'l', 'url', 'u'])
   async def release_link(self, ctx, query):
     query = await self.search_command_setup(query)
-  
+    page_link = f'https://www.thebrpage.net/discography/variation.asp?varID={query}'
+    page_text = get(page_link)
+    page_text = BeautifulSoup(page_text.content, 'html.parser')
+    if "An error occurred" in str(page_text): # checks if page is valid
+      await ctx.send("Release not found. Make sure to check your spelling.")
+    else:
+      await ctx.send(f'{page_link}')
 
+  @commands.cooldown(1, 3, commands.BucketType.user)
+  @release.command(brief="Returns song info", aliases=['info', 'i'])
+  async def release_info(self, ctx, query):
+    query = await self.search_command_setup(query)
+    page_template = "https://www.thebrpage.net/discography/variation.asp?varID="
+    page_link = f"{page_template}{query}"
+    page_text = get(page_link)
+    page_text = BeautifulSoup(page_text.content, 'html.parser')
+
+    if "An error occurred" in str(page_text): # checks if page is valid
+      await ctx.send("Release not found. Make sure to check your spelling.")
+    else:
+      with open("scraped_release.txt", "w") as file:
+          file.write(str(page_text))
+      with open("scraped_release.txt", "r") as file:
+            data = file.read()
+            data_list = data.split("\n")
+      
+      release_title = page_text.find('div', {'class':"pageTitle"}).text.strip() # pulls release title from html
+  
+      release_info = []
+      embed_info = []
+      check = 1
+      for info in page_text.find_all('table', {'class':"flat fixedLayout"}):
+        release_info.append(info)
+        check += 1
+        if check == 4: # only takes first three tables
+          break
+  
+      release_info_sing = str(release_info[0]) # uses first table
+  
+      release_info_sing = release_info_sing.split("\n") # splits table by line breaks
+      for line in release_info_sing:
+        if '<td>' in line:
+          embed_info.append(line)
+        if 'Cover:' and 'Vinyl:' in line:
+          embed_info.append(line)
+  
+      new_info = []
+      for info in embed_info:
+        info = info.replace("<td>", "") # removes html tags
+        info = info.replace("</td>", "")
+        info = info.replace("\r", "") # idk random shit that appears
+        info = info.replace("\t", "")
+        if "''" not in info:
+          new_info.append(info)
+
+      label = new_info[0]
+      date = new_info[1]
+      country = new_info[2]
+      if 'CD' in new_info[4]:
+        format = new_info[4]
+        details = 'N/A'
+      else:
+        details = new_info[4]
+        format = new_info[5]
+      
+      
+      release_embed = discord.Embed(title=release_title, url=page_link, description=f"**Label:** {label} \n**Release Date:** {date} \n**Country:** {country} \n**Disc/Label Details:** {details} \n**Format:** {format}")
+      release_embed.set_footer(text="Created by ANAL#3547 || Requested by {}".format(ctx.author.name))
+      release_embed.set_thumbnail(url=f'{await self.get_images(data_list)}')
+      await ctx.send(embed=release_embed)
+
+  
   
   @commands.group()
   async def song(self, ctx):
