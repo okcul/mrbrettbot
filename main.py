@@ -34,14 +34,14 @@ bot = MyBot(command_prefix=commands.when_mentioned_or('('), intents=intents, hel
 
 @bot.command(brief="Reloads all cogs", description="Reloads all cogs")
 async def reload(ctx): 
-  if ctx.author.id == 0: # replace with your discord ID, or whoever you want to be able to reload your cogs
+  if ctx.author.id == 1065824423552225371 or ctx.author.id == 783032678575243356:
     for filename in listdir("./cogs"):
         if filename.endswith('.py'):
             try:
                 await bot.unload_extension(f'cogs.{filename[:-3]}')
             except:
                 continue
-    for filename in os.listdir("./cogs"):
+    for filename in listdir("./cogs"):
         if filename.endswith('.py'):
             await bot.load_extension(f'cogs.{filename[:-3]}')
             await ctx.send(f"Successfully reloaded `{filename}`")
